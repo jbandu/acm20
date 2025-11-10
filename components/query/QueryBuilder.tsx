@@ -786,37 +786,33 @@ interface ProjectOption {
 }
 
 function useProjectOptions() {
-  return useQuery<{ projects: ProjectOption[] }>(
-    ["project-options"],
-    async () => {
+  return useQuery<{ projects: ProjectOption[] }>({
+    queryKey: ["project-options"],
+    queryFn: async () => {
       const response = await fetch("/api/projects/options");
       if (!response.ok) {
         throw new Error("Failed to load project options");
       }
       return response.json();
     },
-    {
-      staleTime: 1000 * 60 * 5,
-      retry: 1,
-    }
-  );
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
 }
 
 function useDocumentVaultStats() {
-  return useQuery<{ documentCount: number }>(
-    ["document-vault-stats"],
-    async () => {
+  return useQuery<{ documentCount: number }>({
+    queryKey: ["document-vault-stats"],
+    queryFn: async () => {
       const response = await fetch("/api/documents/stats");
       if (!response.ok) {
         throw new Error("Failed to load document stats");
       }
       return response.json();
     },
-    {
-      staleTime: 1000 * 60 * 5,
-      retry: 1,
-    }
-  );
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
 }
 interface RadioCardProps {
   id: string;

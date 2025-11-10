@@ -1,4 +1,4 @@
-# ACM20
+# ACM20 Research Platform
 
 This is a sample repository for ACM20 project.
 
