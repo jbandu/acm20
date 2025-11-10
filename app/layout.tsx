@@ -1,9 +1,18 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import "./globals.css";
+
+// Conditionally import devtools only in development
+let ReactQueryDevtools: any = null;
+if (process.env.NODE_ENV === "development") {
+  try {
+    ReactQueryDevtools = require("@tanstack/react-query-devtools").ReactQueryDevtools;
+  } catch {
+    // Devtools not available, continue without them
+  }
+}
 
 export default function RootLayout({
   children,
@@ -27,7 +36,7 @@ export default function RootLayout({
       <body>
         <QueryClientProvider client={queryClient}>
           {children}
-          <ReactQueryDevtools initialIsOpen={false} />
+          {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </body>
     </html>
