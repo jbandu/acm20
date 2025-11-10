@@ -22,6 +22,20 @@ const DEFAULT_STEPS = [
   { id: "llm", label: "Analyzing with LLMs" },
 ];
 
+type EstimateEvent = {
+  type: "estimate";
+  seconds: number;
+};
+
+type StepEvent = {
+  stepId: string;
+  status: "active" | "completed" | "error";
+  detail?: string;
+  metadata?: Record<string, unknown>;
+};
+
+type ProgressEventPayload = EstimateEvent | StepEvent;
+
 export function ProgressTracker({ queryId, className, autoConnect = true }: ProgressTrackerProps) {
   const [connectionError, setConnectionError] = React.useState<string | null>(null);
   const [startedAt] = React.useState(() => Date.now());
@@ -33,6 +47,32 @@ export function ProgressTracker({ queryId, className, autoConnect = true }: Prog
   const failStep = useQueryProgressStore((state) => state.failStep);
   const setEstimatedTime = useQueryProgressStore((state) => state.setEstimatedTime);
   const reset = useQueryProgressStore((state) => state.reset);
+
+  const handleProgressEvent = React.useCallback(
+    (payload: ProgressEventPayload) => {
+      if ("type" in payload && payload.type === "estimate") {
+        setEstimatedTime(payload.seconds);
+        return;
+      }
+
+      const stepPayload = payload as StepEvent;
+
+      switch (stepPayload.status) {
+        case "active":
+          startStep(stepPayload.stepId, stepPayload.detail);
+          break;
+        case "completed":
+          completeStep(stepPayload.stepId, stepPayload.metadata);
+          break;
+        case "error":
+          failStep(stepPayload.stepId, stepPayload.detail ?? "Step failed");
+          break;
+        default:
+          break;
+      }
+    },
+    [completeStep, failStep, setEstimatedTime, startStep]
+  );
 
   React.useEffect(() => {
     initialize(DEFAULT_STEPS);
@@ -61,33 +101,7 @@ export function ProgressTracker({ queryId, className, autoConnect = true }: Prog
       source.close();
       reset();
     };
-  }, [autoConnect, initialize, queryId, reset]);
-
-  const handleProgressEvent = React.useCallback(
-    (payload: ProgressEventPayload) => {
-      if ("type" in payload && payload.type === "estimate") {
-        setEstimatedTime(payload.seconds);
-        return;
-      }
-
-      const stepPayload = payload as StepEvent;
-
-      switch (stepPayload.status) {
-        case "active":
-          startStep(stepPayload.stepId, stepPayload.detail);
-          break;
-        case "completed":
-          completeStep(stepPayload.stepId, stepPayload.metadata);
-          break;
-        case "error":
-          failStep(stepPayload.stepId, stepPayload.detail ?? "Step failed");
-          break;
-        default:
-          break;
-      }
-    },
-    [completeStep, failStep, setEstimatedTime, startStep]
-  );
+  }, [autoConnect, initialize, queryId, reset, handleProgressEvent]);
 
   const handleCancel = async () => {
     try {
@@ -148,20 +162,6 @@ export function ProgressTracker({ queryId, className, autoConnect = true }: Prog
     </Card>
   );
 }
-
-type EstimateEvent = {
-  type: "estimate";
-  seconds: number;
-};
-
-type StepEvent = {
-  stepId: string;
-  status: "active" | "completed" | "error";
-  detail?: string;
-  metadata?: Record<string, unknown>;
-};
-
-type ProgressEventPayload = EstimateEvent | StepEvent;
 
 interface TimelineRowProps {
   step: QueryProgressStep;
@@ -250,35 +250,47 @@ function StatusPill({ status }: { status: "idle" | "active" | "completed" | "err
   );
 }
 
-const SpinnerIcon = (props: StatusIconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    className={cn("animate-spin", props.className)}
-  >
-    <circle cx="12" cy="12" r="9" opacity="0.2" />
-    <path d="M21 12a9 9 0 0 0-9-9" />
-  </svg>
-);
+function SpinnerIcon(props: StatusIconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      className={cn("animate-spin", props.className)}
+    >
+      <circle cx="12" cy="12" r="9" opacity="0.2" />
+      <path d="M21 12a9 9 0 0 0-9-9" />
+    </svg>
+  );
+}
+SpinnerIcon.displayName = "SpinnerIcon";
 
-const CheckIcon = (props: StatusIconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
-    <path d="M20 6 9 17l-5-5" />
-  </svg>
-);
+function CheckIcon(props: StatusIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+CheckIcon.displayName = "CheckIcon";
 
-const AlertIcon = (props: StatusIconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
-    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-    <line x1="12" x2="12" y1="9" y2="13" />
-    <line x1="12" x2="12.01" y1="17" y2="17" />
-  </svg>
-);
+function AlertIcon(props: StatusIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" x2="12" y1="9" y2="13" />
+      <line x1="12" x2="12.01" y1="17" y2="17" />
+    </svg>
+  );
+}
+AlertIcon.displayName = "AlertIcon";
 
-const CircleIcon = (props: StatusIconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
-    <circle cx="12" cy="12" r="9" opacity={0.3} />
-  </svg>
-);
+function CircleIcon(props: StatusIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+      <circle cx="12" cy="12" r="9" opacity={0.3} />
+    </svg>
+  );
+}
+CircleIcon.displayName = "CircleIcon";
