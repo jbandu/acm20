@@ -84,13 +84,15 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
   const initialNodes = React.useMemo<KnowledgeNode[]>(() => data?.nodes ?? [], [data?.nodes]);
   const initialEdges = React.useMemo<KnowledgeEdge[]>(() => data?.edges ?? [], [data?.edges]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<KnowledgeNode["data"]>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<KnowledgeNode["data"]>(
+    initialNodes as Node<KnowledgeNode["data"]>[]
+  );
   const [edges, setEdges, onEdgesChange] = useEdgesState<KnowledgeEdge>(initialEdges);
 
   React.useEffect(() => {
     if (!data) return;
     const laidOut = applyLayout(initialNodes, initialEdges, layout);
-    setNodes(laidOut.nodes);
+    setNodes(laidOut.nodes as Node<KnowledgeNode["data"]>[]);
     setEdges(laidOut.edges);
   }, [data, layout, initialNodes, initialEdges, setNodes, setEdges]);
 
