@@ -224,14 +224,26 @@ interface StatusIconProps {
 
 function getStatusIcon(status: "idle" | "active" | "completed" | "error") {
   switch (status) {
-    case "completed":
-      return (props: StatusIconProps) => <CheckIcon {...props} />;
-    case "error":
-      return (props: StatusIconProps) => <AlertIcon {...props} />;
-    case "active":
-      return (props: StatusIconProps) => <SpinnerIcon {...props} />;
-    default:
-      return (props: StatusIconProps) => <CircleIcon {...props} />;
+    case "completed": {
+      const CompletedIcon = (props: StatusIconProps) => <CheckIcon {...props} />;
+      CompletedIcon.displayName = "CompletedIcon";
+      return CompletedIcon;
+    }
+    case "error": {
+      const ErrorIcon = (props: StatusIconProps) => <AlertIcon {...props} />;
+      ErrorIcon.displayName = "ErrorIcon";
+      return ErrorIcon;
+    }
+    case "active": {
+      const ActiveIcon = (props: StatusIconProps) => <SpinnerIcon {...props} />;
+      ActiveIcon.displayName = "ActiveIcon";
+      return ActiveIcon;
+    }
+    default: {
+      const IdleIcon = (props: StatusIconProps) => <CircleIcon {...props} />;
+      IdleIcon.displayName = "IdleIcon";
+      return IdleIcon;
+    }
   }
 }
 
