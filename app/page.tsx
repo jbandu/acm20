@@ -27,7 +27,7 @@ export default function Home() {
           </p>
         </header>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard" className="space-y-6">
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="query">New Query</TabsTrigger>

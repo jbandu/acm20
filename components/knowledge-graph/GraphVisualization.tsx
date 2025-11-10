@@ -28,21 +28,22 @@ export interface GraphVisualizationProps {
 }
 
 export interface KnowledgeNode extends Node {
-  data: Node["data"] & {
+  data: {
     title: string;
     description?: string;
     type: string;
     value?: number;
     tags?: string[];
+    [key: string]: unknown;
   };
 }
 
-export interface KnowledgeEdge extends Edge {
+export type KnowledgeEdge = Edge & {
   data?: {
     label?: string;
     weight?: number;
   };
-}
+};
 
 const NODE_CLASS_MAP: Record<string, string> = {
   concept: "border-sky-500 bg-sky-500/10",
@@ -83,13 +84,15 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
   const initialNodes = React.useMemo<KnowledgeNode[]>(() => data?.nodes ?? [], [data?.nodes]);
   const initialEdges = React.useMemo<KnowledgeEdge[]>(() => data?.edges ?? [], [data?.edges]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<KnowledgeNode>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<KnowledgeNode["data"]>(
+    initialNodes as Node<KnowledgeNode["data"]>[]
+  );
   const [edges, setEdges, onEdgesChange] = useEdgesState<KnowledgeEdge>(initialEdges);
 
   React.useEffect(() => {
     if (!data) return;
     const laidOut = applyLayout(initialNodes, initialEdges, layout);
-    setNodes(laidOut.nodes);
+    setNodes(laidOut.nodes as Node<KnowledgeNode["data"]>[]);
     setEdges(laidOut.edges);
   }, [data, layout, initialNodes, initialEdges, setNodes, setEdges]);
 
@@ -99,11 +102,12 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
     }
 
     const lower = searchTerm.toLowerCase();
-    return nodes.filter((node) => {
-      const isTypeActive = activeTypes.has(node.data?.type ?? "concept");
+    return nodes.filter((node): node is KnowledgeNode => {
+      const isTypeActive = activeTypes.has((node.data as KnowledgeNode["data"])?.type ?? "concept");
+      const nodeData = node.data as KnowledgeNode["data"];
       const matchesSearch = !lower
-        || node.data?.title?.toLowerCase().includes(lower)
-        || node.data?.tags?.some((tag) => tag.toLowerCase().includes(lower));
+        || nodeData?.title?.toLowerCase().includes(lower)
+        || nodeData?.tags?.some((tag) => tag.toLowerCase().includes(lower));
       return isTypeActive && matchesSearch;
     });
   }, [nodes, activeTypes, searchTerm]);
@@ -197,7 +201,7 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
           >
             <Background gap={24} />
             <MiniMap
-              nodeColor={(node) => mapNodeColor(node.data?.type)}
+              nodeColor={(node) => mapNodeColor((node.data as KnowledgeNode["data"])?.type)}
               pannable
               zoomable
             />
