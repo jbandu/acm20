@@ -37,12 +37,12 @@ export interface KnowledgeNode extends Node {
   };
 }
 
-export interface KnowledgeEdge extends Edge {
+export type KnowledgeEdge = Edge & {
   data?: {
     label?: string;
     weight?: number;
   };
-}
+};
 
 const NODE_CLASS_MAP: Record<string, string> = {
   concept: "border-sky-500 bg-sky-500/10",
