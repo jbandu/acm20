@@ -28,12 +28,13 @@ export interface GraphVisualizationProps {
 }
 
 export interface KnowledgeNode extends Node {
-  data: Node["data"] & {
+  data: {
     title: string;
     description?: string;
     type: string;
     value?: number;
     tags?: string[];
+    [key: string]: unknown;
   };
 }
 
@@ -99,11 +100,12 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
     }
 
     const lower = searchTerm.toLowerCase();
-    return nodes.filter((node) => {
-      const isTypeActive = activeTypes.has(node.data?.type ?? "concept");
+    return nodes.filter((node): node is KnowledgeNode => {
+      const isTypeActive = activeTypes.has((node.data as KnowledgeNode["data"])?.type ?? "concept");
+      const nodeData = node.data as KnowledgeNode["data"];
       const matchesSearch = !lower
-        || node.data?.title?.toLowerCase().includes(lower)
-        || node.data?.tags?.some((tag) => tag.toLowerCase().includes(lower));
+        || nodeData?.title?.toLowerCase().includes(lower)
+        || nodeData?.tags?.some((tag) => tag.toLowerCase().includes(lower));
       return isTypeActive && matchesSearch;
     });
   }, [nodes, activeTypes, searchTerm]);
@@ -197,7 +199,7 @@ export function GraphVisualization({ queryId, autoLoad = true, className }: Grap
           >
             <Background gap={24} />
             <MiniMap
-              nodeColor={(node) => mapNodeColor(node.data?.type)}
+              nodeColor={(node) => mapNodeColor((node.data as KnowledgeNode["data"])?.type)}
               pannable
               zoomable
             />
